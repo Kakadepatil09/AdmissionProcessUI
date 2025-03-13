@@ -1,8 +1,23 @@
 "use client";
+
 import { useState } from "react";
 
-export default function EligibilityCriteria() {
-  const [criteria, setCriteria] = useState({
+export interface EligibilityCriteriaData {
+  age: string;
+  qualifyingExam: string;
+  percentage: string;
+  entranceExam: string;
+  entranceScore: string;
+  residency: boolean;
+}
+
+interface EligibilityCriteriaProps {
+  onNext: (data: EligibilityCriteriaData) => void;
+  onPrev?: () => void;
+}
+
+export default function EligibilityCriteria({ onNext, onPrev }: EligibilityCriteriaProps) {
+  const [criteria, setCriteria] = useState<EligibilityCriteriaData>({
     age: "",
     qualifyingExam: "",
     percentage: "",
@@ -11,46 +26,57 @@ export default function EligibilityCriteria() {
     residency: false,
   });
 
+  // Update field values based on user input
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const { name, value, type } = e.target as HTMLInputElement;
-    
+    const { name, value, type } = e.target;
     setCriteria({
       ...criteria,
       [name]: type === "checkbox" ? (e.target as HTMLInputElement).checked : value,
     });
   };
 
-  const isEligible = () => {
-    // Simple eligibility check
-    const age = parseInt(criteria.age);
-    const percentage = parseFloat(criteria.percentage);
-    const score = parseInt(criteria.entranceScore);
-    
+  // Eligibility check logic
+  const isEligible = (): boolean => {
+    const ageNum = parseInt(criteria.age);
+    const percentageNum = parseFloat(criteria.percentage);
+    const scoreNum = parseInt(criteria.entranceScore);
     return (
-      criteria.qualifyingExam && 
-      !isNaN(age) && age >= 17 && 
-      !isNaN(percentage) && percentage >= 60 && 
-      criteria.entranceExam && 
-      !isNaN(score) && score >= 100
+      criteria.qualifyingExam !== "" &&
+      !isNaN(ageNum) && ageNum >= 17 &&
+      !isNaN(percentageNum) && percentageNum >= 60 &&
+      criteria.entranceExam !== "" &&
+      !isNaN(scoreNum) && scoreNum >= 100
     );
   };
 
+  // Handle form submission
+  const handleNext = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isEligible()) {
+      onNext(criteria);
+    } else {
+      alert("Please fill in all required fields correctly to proceed.");
+    }
+  };
+
   return (
-    <div className="flex-1">
-      <h3 className="text-xl font-medium mb-4">Eligibility Criteria</h3>
+    <form onSubmit={handleNext} className="flex-1">
       <div className="space-y-6">
+        {/* Eligibility Requirements Notice */}
         <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
           <p className="font-medium">Eligibility Requirements:</p>
           <ul className="list-disc pl-5 mt-2">
             <li>Minimum 17 years of age</li>
             <li>Completed qualifying examination with minimum 60% marks</li>
-            <li>Valid entrance examination score</li>
+            <li>Valid entrance examination score (minimum 100)</li>
           </ul>
         </div>
 
+        {/* Input Fields */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          {/* Age Input */}
           <div>
             <label htmlFor="age" className="block text-sm font-medium text-gray-700 mb-1">
               Your Age (in years) *
@@ -67,6 +93,7 @@ export default function EligibilityCriteria() {
             />
           </div>
 
+          {/* Qualifying Examination */}
           <div>
             <label htmlFor="qualifyingExam" className="block text-sm font-medium text-gray-700 mb-1">
               Qualifying Examination *
@@ -86,6 +113,7 @@ export default function EligibilityCriteria() {
             </select>
           </div>
 
+          {/* Percentage in Qualifying Exam */}
           <div>
             <label htmlFor="percentage" className="block text-sm font-medium text-gray-700 mb-1">
               Percentage in Qualifying Exam *
@@ -104,6 +132,7 @@ export default function EligibilityCriteria() {
             />
           </div>
 
+          {/* Entrance Examination Selection */}
           <div>
             <label htmlFor="entranceExam" className="block text-sm font-medium text-gray-700 mb-1">
               Entrance Examination *
@@ -125,6 +154,7 @@ export default function EligibilityCriteria() {
             </select>
           </div>
 
+          {/* Entrance Examination Score */}
           <div>
             <label htmlFor="entranceScore" className="block text-sm font-medium text-gray-700 mb-1">
               Entrance Examination Score *
@@ -141,6 +171,7 @@ export default function EligibilityCriteria() {
             />
           </div>
 
+          {/* Residency Checkbox */}
           <div className="flex items-center">
             <input
               type="checkbox"
@@ -156,14 +187,43 @@ export default function EligibilityCriteria() {
           </div>
         </div>
 
-        <div className={`p-4 rounded-md mt-6 ${isEligible() ? 'bg-green-50 border-green-500' : 'bg-red-50 border-red-500'} border-l-4`}>
+        {/* Eligibility Message */}
+        <div
+          className={`p-4 rounded-md mt-6 border-l-4 ${
+            isEligible() ? "bg-green-50 border-green-500" : "bg-red-50 border-red-500"
+          }`}
+        >
           <p className="font-medium">
-            {isEligible() 
-              ? "Based on the information provided, you appear to be eligible for the program." 
+            {isEligible()
+              ? "Based on the information provided, you appear to be eligible for the program."
               : "Based on the information provided, you may not meet all eligibility criteria. Please review the requirements."}
           </p>
         </div>
       </div>
-    </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mt-6 pt-4 border-t">
+        {onPrev && (
+          <button
+            type="button"
+            onClick={onPrev}
+            className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#2e3653] text-white hover:bg-[#FC8939]"
+          >
+            Previous
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={!isEligible()}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md ${
+            isEligible()
+              ? "bg-[#2e3653] text-white hover:bg-[#FC8939] cursor-pointer"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          Next
+        </button>
+      </div>
+    </form>
   );
 }

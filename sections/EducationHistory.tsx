@@ -1,8 +1,22 @@
 "use client";
 import { useState } from "react";
 
-export default function EducationHistory() {
-  const [educationRecords, setEducationRecords] = useState([
+export interface EducationRecord {
+  level: string;
+  institution: string;
+  board: string;
+  yearOfPassing: string;
+  percentage: string;
+  subjects: string;
+}
+
+interface EducationHistoryProps {
+  onNext: (data: EducationRecord[]) => void;
+  onPrev?: () => void;
+}
+
+export default function EducationHistory({ onNext, onPrev }: EducationHistoryProps) {
+  const [educationRecords, setEducationRecords] = useState<EducationRecord[]>([
     {
       level: "",
       institution: "",
@@ -13,6 +27,7 @@ export default function EducationHistory() {
     },
   ]);
 
+  // Add a new empty education record
   const addEducationRecord = () => {
     setEducationRecords([
       ...educationRecords,
@@ -27,13 +42,15 @@ export default function EducationHistory() {
     ]);
   };
 
+  // Remove a record by its index
   const removeEducationRecord = (index: number) => {
     const updatedRecords = [...educationRecords];
     updatedRecords.splice(index, 1);
     setEducationRecords(updatedRecords);
   };
 
-  const handleEducationChange = (index: number, field: string, value: string) => {
+  // Update a value in an education record
+  const handleEducationChange = (index: number, field: keyof EducationRecord, value: string) => {
     const updatedRecords = [...educationRecords];
     updatedRecords[index] = {
       ...updatedRecords[index],
@@ -42,10 +59,34 @@ export default function EducationHistory() {
     setEducationRecords(updatedRecords);
   };
 
+  // Validate every record: Required fields must not be empty.
+  const isFormValid = (): boolean => {
+    return educationRecords.every(
+      (record) =>
+        record.level.trim() !== "" &&
+        record.institution.trim() !== "" &&
+        record.board.trim() !== "" &&
+        record.yearOfPassing.trim() !== "" &&
+        record.percentage.trim() !== ""
+    );
+  };
+
+  // Handle form submission
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (isFormValid()) {
+      onNext(educationRecords);
+    } else {
+      alert("Please fill in all required fields in every education record.");
+    }
+  };
+
   return (
-    <div className="flex-1">
+    <form onSubmit={handleSubmit} className="flex-1">
       <h3 className="text-xl font-medium mb-4">Education History</h3>
-      <p className="mb-4">Please provide details of your educational qualifications starting from the highest level.</p>
+      <p className="mb-4">
+        Please provide details of your educational qualifications starting from the highest level.
+      </p>
 
       {educationRecords.map((record, index) => (
         <div key={index} className="bg-gray-50 p-4 rounded-md mb-4">
@@ -63,6 +104,7 @@ export default function EducationHistory() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Education Level */}
             <div>
               <label htmlFor={`level-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
                 Education Level *
@@ -84,6 +126,7 @@ export default function EducationHistory() {
               </select>
             </div>
 
+            {/* Institution */}
             <div>
               <label htmlFor={`institution-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
                 School/College/University *
@@ -98,6 +141,7 @@ export default function EducationHistory() {
               />
             </div>
 
+            {/* Board */}
             <div>
               <label htmlFor={`board-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
                 Board/University *
@@ -112,6 +156,7 @@ export default function EducationHistory() {
               />
             </div>
 
+            {/* Year of Passing */}
             <div>
               <label htmlFor={`yearOfPassing-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
                 Year of Passing *
@@ -128,6 +173,7 @@ export default function EducationHistory() {
               />
             </div>
 
+            {/* Percentage/CGPA */}
             <div>
               <label htmlFor={`percentage-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
                 Percentage/CGPA *
@@ -142,6 +188,7 @@ export default function EducationHistory() {
               />
             </div>
 
+            {/* Major Subjects (Optional) */}
             <div>
               <label htmlFor={`subjects-${index}`} className="block text-sm font-medium text-gray-700 mb-1">
                 Major Subjects
@@ -166,6 +213,30 @@ export default function EducationHistory() {
       >
         + Add Another Education Record
       </button>
-    </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mt-6 pt-4 border-t">
+        {onPrev && (
+          <button
+            type="button"
+            onClick={onPrev}
+            className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#2e3653] text-white hover:bg-[#FC8939]"
+          >
+            Previous
+          </button>
+        )}
+        <button
+          type="submit"
+          disabled={!isFormValid()}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md ${
+            isFormValid()
+              ? "bg-[#2e3653] text-white hover:bg-[#FC8939] cursor-pointer"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          Next
+        </button>
+      </div>
+    </form>
   );
 }

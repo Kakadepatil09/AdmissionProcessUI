@@ -1,3 +1,4 @@
+// components/section.tsx
 "use client";
 
 import Guidelines from "../sections/Guidelines";
@@ -12,37 +13,42 @@ import Declarations from "../sections/Declarations";
 import ReviewSubmit from "../sections/ReviewSubmit";
 import MakePayment from "../sections/MakePayment";
 
+// Updated interface to include navigation callbacks
 interface SectionProps {
   sectionId: number;
+  onNext: () => void;
+  onPrev: () => void;
 }
 
-export default function Section({ sectionId }: SectionProps) {
+export default function Section({ sectionId, onNext, onPrev }: SectionProps) {
   const renderSection = () => {
     switch (sectionId) {
       case 1:
-        return <Guidelines />;
+        return <Guidelines onNext={onNext} onPrev={onPrev} />;
       case 2:
-        return <ProgramSelection />;
+        return <ProgramSelection onNext={onNext} onPrev={onPrev} />;
       case 3:
-        return <PersonalDetails />;
+        return <PersonalDetails onNext={onNext} onPrev={onPrev} />;
       case 4:
-        return <EligibilityCriteria />;
+        return <EligibilityCriteria onNext={onNext} onPrev={onPrev} />;
       case 5:
-        return <CategorySelection />;
+        return <CategorySelection onNext={onNext} onPrev={onPrev} />;
       case 6:
-        return <EducationHistory />;
+        return <EducationHistory onNext={onNext} onPrev={onPrev} />;
       case 7:
-        return <EntranceDetails />;
+        return <EntranceDetails onNext={onNext} onPrev={onPrev} />;
       case 8:
-        return <UploadDocuments />;
+        return <UploadDocuments onNext={onNext} onPrev={onPrev} />;
       case 9:
-        return <Declarations />;
+        return <Declarations onNext={onNext} onPrev={onPrev} />;
       case 10:
-        return <ReviewSubmit />;
+        return <ReviewSubmit onNext={onNext} onPrev={onPrev} />;
       case 11:
-        return <MakePayment />;
+        return <MakePayment onNext={onNext} onPrev={onPrev} />;
       default:
-        return <div className="text-red-500 text-center">❌ Section Not Found</div>;
+        return (
+          <div className="text-red-500 text-center">❌ Section Not Found</div>
+        );
     }
   };
 

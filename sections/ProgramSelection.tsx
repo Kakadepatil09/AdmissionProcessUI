@@ -1,9 +1,21 @@
+"use client";
+
 import { useState } from "react";
 
-export default function ProgramSelection() {
+interface Program {
+  id: string;
+  name: string;
+}
+
+interface ProgramSelectionProps {
+  onNext: (data: { selectedDepartment: string; preferences: Program[] }) => void;
+  onPrev?: () => void;
+}
+
+export default function ProgramSelection({ onNext, onPrev }: ProgramSelectionProps) {
   const [selectedDepartment, setSelectedDepartment] = useState("");
   const [selectedProgram, setSelectedProgram] = useState("");
-  const [preferences, setPreferences] = useState<{ id: string; name: string }[]>([]);
+  const [preferences, setPreferences] = useState<Program[]>([]);
 
   // Example departments
   const departments = [
@@ -15,7 +27,7 @@ export default function ProgramSelection() {
   ];
 
   // Example programs mapped by department
-  const programs = {
+  const programs: { [key: string]: Program[] } = {
     eng: [
       { id: "cs", name: "Computer Science" },
       { id: "me", name: "Mechanical Engineering" },
@@ -48,21 +60,21 @@ export default function ProgramSelection() {
     ],
   };
 
-  // Handle department change
+  // When the department changes, reset both the selected program and current preferences
   const handleDepartmentChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const deptId = e.target.value;
     setSelectedDepartment(deptId);
     setSelectedProgram("");
+    setPreferences([]);
   };
 
-  // Handle program selection
+  // Handle program selection: add to preferences
   const handleAddPreference = () => {
     if (!selectedProgram) return;
 
     const programObj = programs[selectedDepartment as keyof typeof programs].find(
       (p) => p.id === selectedProgram
     );
-
     if (!programObj) return;
 
     if (preferences.length >= 8) {
@@ -79,14 +91,25 @@ export default function ProgramSelection() {
     setSelectedProgram(""); // Reset selection after adding
   };
 
-  // Remove a preference
+  // Remove a selected preference
   const handleRemovePreference = (id: string) => {
     setPreferences(preferences.filter((p) => p.id !== id));
+  };
+
+  // Validation: Department must be selected and at least one preference must be added
+  const isValid = selectedDepartment !== "" && preferences.length > 0;
+
+  // Handle Next button click
+  const handleNext = () => {
+    if (isValid) {
+      onNext({ selectedDepartment, preferences });
+    }
   };
 
   return (
     <div className="flex-1">
       <h3 className="text-xl font-medium mb-4">Program Selection</h3>
+      
       <div className="space-y-6">
         {/* Department Selection */}
         <div>
@@ -134,8 +157,9 @@ export default function ProgramSelection() {
 
         {/* Add Preference Button */}
         <button
+          type="button"
           onClick={handleAddPreference}
-          className="px-4 py-2 bg-blue-500 text-white rounded-md disabled:opacity-50"
+          className="px-4 py-2 bg-blue-500 text-black rounded-md disabled:opacity-50"
           disabled={!selectedProgram}
         >
           Add Preference
@@ -148,8 +172,11 @@ export default function ProgramSelection() {
             <ul className="space-y-2">
               {preferences.map((pref, index) => (
                 <li key={pref.id} className="flex items-center justify-between bg-white p-2 rounded-md shadow">
-                  <span>{index + 1}. {pref.name}</span>
+                  <span>
+                    {index + 1}. {pref.name}
+                  </span>
                   <button
+                    type="button"
                     onClick={() => handleRemovePreference(pref.id)}
                     className="ml-2 text-red-600"
                   >
@@ -160,6 +187,29 @@ export default function ProgramSelection() {
             </ul>
           </div>
         )}
+      </div>
+
+      {/* Navigation Buttons */}
+      <div className="flex justify-between mt-6 pt-4 border-t">
+        {onPrev && (
+          <button
+            onClick={onPrev}
+            className="flex items-center gap-2 px-4 py-2 rounded-md bg-[#2e3653] text-white hover:bg-[#FC8939]"
+          >
+            Previous
+          </button>
+        )}
+        <button
+          onClick={handleNext}
+          disabled={!isValid}
+          className={`flex items-center gap-2 px-4 py-2 rounded-md ${
+            isValid
+              ? "bg-[#2e3653] text-white hover:bg-[#FC8939] cursor-pointer"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+          }`}
+        >
+          Next
+        </button>
       </div>
     </div>
   );

@@ -1,26 +1,71 @@
 "use client";
 import { useState } from "react";
+import { CloudUploadIcon, CheckCircleIcon } from "@heroicons/react/outline";
 
-export default function CategorySelection() {
+interface CategorySelectionProps {
+  onNext: () => void;
+  onPrev?: () => void;
+}
+
+export default function CategorySelection({ onNext, onPrev }: CategorySelectionProps) {
   const [category, setCategory] = useState("");
   const [subcategory, setSubcategory] = useState("");
-  const [showCertificate, setShowCertificate] = useState(false);
-  
+  const [certificateFile, setCertificateFile] = useState<File | null>(null);
+  const [isFormValid, setIsFormValid] = useState(false);
+
+  // Helper function to validate the form.
+  // For "general", no certificate is required.
+  // For all non-general, a certificate file must be provided.
+  // For "obc" or "pwd", a subcategory selection is also required.
+  const checkFormValid = (cat: string, subcat: string, file: File | null): boolean => {
+    if (cat === "general") {
+      return true;
+    } else {
+      if (!file) return false;
+      if (cat === "obc" || cat === "pwd") {
+        return subcat !== "";
+      }
+      return true;
+    }
+  };
+
+  // Handle category changes and update form validity.
   const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setCategory(e.target.value);
+    const selectedCategory = e.target.value;
+    setCategory(selectedCategory);
     setSubcategory("");
-    setShowCertificate(e.target.value !== "general");
+    setCertificateFile(null); // Reset file selection
+    setIsFormValid(checkFormValid(selectedCategory, "", null));
+  };
+
+  // Handle updates to the subcategory selection and re-validate.
+  const handleSubcategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = e.target.value;
+    setSubcategory(value);
+    setIsFormValid(checkFormValid(category, value, certificateFile));
+  };
+
+  // Process file upload and update form validity.
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setCertificateFile(file);
+      setIsFormValid(checkFormValid(category, subcategory, file));
+    }
   };
 
   return (
-    <div className="flex-1">
-      <h3 className="text-xl font-medium mb-4">Category Selection</h3>
-      <div className="space-y-6">
-        <div className="bg-gray-50 p-4 rounded-md">
-          <p>Selecting the appropriate category is essential for determining fee structure, scholarship eligibility, and seat allocation as per government policies.</p>
-        </div>
+    <div className="max-w-2xl mx-auto mt-6">
+      {/* Description Card */}
+      <div className="bg-gray-100 p-4 rounded-md border border-gray-300">
+        <p className="text-gray-700">
+          Selecting the correct category is essential for scholarships, fee structure, and seat allocation based on government policies.
+        </p>
+      </div>
 
-        <div>
+      <div className="space-y-6 mt-6">
+        {/* Category Selection */}
+        <div className="p-4 bg-white shadow-md rounded-lg border border-gray-200">
           <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">
             Select Category *
           </label>
@@ -41,16 +86,18 @@ export default function CategorySelection() {
           </select>
         </div>
 
-        {category && category !== "general" && (
-          <div>
+        {/* Subcategory Selection (Only for OBC and PwD) */}
+        {category && category !== "general" && (category === "obc" || category === "pwd") && (
+          <div className="p-4 bg-white shadow-md rounded-lg border border-gray-200">
             <label htmlFor="subcategory" className="block text-sm font-medium text-gray-700 mb-1">
-              Select Sub-Category (if applicable)
+              Select Sub-Category *
             </label>
             <select
               id="subcategory"
               value={subcategory}
-              onChange={(e) => setSubcategory(e.target.value)}
+              onChange={handleSubcategoryChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md"
+              required
             >
               <option value="">-- Select Sub-Category --</option>
               {category === "obc" && (
@@ -70,23 +117,63 @@ export default function CategorySelection() {
           </div>
         )}
 
-        {showCertificate && (
-          <div className="bg-yellow-50 border-l-4 border-yellow-500 p-4">
-            <p className="font-medium">Important:</p>
-            <p>You will need to upload a valid category certificate in the document upload section. The certificate should be issued by the competent authority as per government norms.</p>
+        {/* Document Upload Requirement for non-General Categories */}
+        {category && category !== "general" && (
+          <div className="p-4 bg-yellow-50 border-l-4 border-yellow-500 rounded-md">
+            <p className="font-medium text-yellow-800">Important:</p>
+            <p className="text-yellow-700">
+              To proceed, you must upload a valid category certificate issued by a competent authority.
+            </p>
           </div>
         )}
 
+        {/* EWS Specific Instructions */}
         {category === "ews" && (
-          <div className="bg-blue-50 p-4 rounded-md">
-            <p className="font-medium">EWS Certificate Requirements:</p>
-            <ul className="list-disc pl-5 mt-2">
+          <div className="p-4 bg-blue-50 border-l-4 border-blue-500 rounded-md">
+            <p className="font-medium text-blue-800">EWS Certificate Requirements:</p>
+            <ul className="list-disc pl-5 mt-2 text-blue-700">
               <li>Family income should be below ₹8 lakhs per annum</li>
               <li>Certificate must be issued for the current financial year</li>
-              <li>Certificate must be issued by authorized government officials</li>
+              <li>Must be issued by an authorized government official</li>
             </ul>
           </div>
         )}
+
+        {/* Document Upload Section */}
+        {category && category !== "general" && (
+          <div className="p-4 bg-white shadow-md rounded-lg border border-gray-200">
+            <label htmlFor="certificateUpload" className="block text-sm font-medium text-gray-700 mb-1">
+              Upload Category Certificate *
+            </label>
+            <div className="mt-2 flex items-center justify-between bg-gray-100 border border-gray-300 rounded-lg p-3 cursor-pointer">
+              <input
+                type="file"
+                id="certificateUpload"
+                onChange={handleFileUpload}
+                className="hidden"
+                accept=".png, .jpg, .pdf"
+              />
+              <label htmlFor="certificateUpload" className="flex items-center space-x-3 cursor-pointer">
+                <CloudUploadIcon className="h-6 w-6 text-blue-500" />
+                <span className="text-sm text-gray-700">
+                  {certificateFile ? certificateFile.name : "Click to upload or drag & drop"}
+                </span>
+              </label>
+              {certificateFile && <CheckCircleIcon className="h-6 w-6 text-green-500" />}
+            </div>
+          </div>
+        )}
+
+        {/* Proceed Button */}
+        <button
+          onClick={onNext}
+          className={`w-full px-4 py-2 rounded-md text-white text-lg font-medium transition ${
+            isFormValid ? "bg-green-600 hover:bg-green-700" : "bg-gray-300 cursor-not-allowed"
+          }`}
+          disabled={!isFormValid}
+        >
+          Proceed to Next Step
+        </button>
       </div>
     </div>
   );

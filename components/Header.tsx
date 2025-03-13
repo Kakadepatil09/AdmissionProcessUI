@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { LogOut } from "lucide-react";
+import '../app/globals.css';
 
 export default function Header() {
   return (

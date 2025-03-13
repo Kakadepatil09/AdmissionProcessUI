@@ -1,15 +1,34 @@
 "use client";
 import { useState } from "react";
 
-export default function Declarations() {
+export interface DeclarationsData {
+  agreed: boolean;
+}
+
+interface DeclarationsProps {
+  onNext: (data: DeclarationsData) => void;
+  onPrev?: () => void;
+}
+
+export default function Declarations({ onNext, onPrev }: DeclarationsProps) {
   const [agreed, setAgreed] = useState(false);
 
   const handleCheckboxChange = () => {
     setAgreed(!agreed);
   };
 
+  // Handle form submission ensuring that the declaration is agreed to.
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (agreed) {
+      onNext({ agreed });
+    } else {
+      alert("Please agree to the terms before proceeding.");
+    }
+  };
+
   return (
-    <div className="flex-1">
+    <form onSubmit={handleSubmit} className="flex-1">
       <h3 className="text-xl font-medium mb-4">Declarations</h3>
 
       <div className="space-y-6">
@@ -40,20 +59,30 @@ export default function Declarations() {
           </div>
         </div>
 
-        <div className="flex justify-end">
+        {/* Navigation Buttons */}
+        <div className="flex justify-between">
+          {onPrev && (
+            <button
+              type="button"
+              onClick={onPrev}
+              className="px-4 py-2 rounded-md bg-[#2e3653] text-white hover:bg-[#FC8939] transition"
+            >
+              Previous
+            </button>
+          )}
           <button
             type="submit"
             disabled={!agreed}
             className={`px-4 py-2 rounded-md transition ${
               agreed
-                ? "bg-[#FC8939] text-white hover:bg-[#e57830]"
+                ? "bg-[#FC8939] text-white hover:bg-[#e57830] cursor-pointer"
                 : "bg-gray-300 text-gray-500 cursor-not-allowed"
             }`}
           >
-            Submit & Proceed
+            Submit &amp; Proceed
           </button>
         </div>
       </div>
-    </div>
+    </form>
   );
 }
